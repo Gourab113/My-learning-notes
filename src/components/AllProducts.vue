@@ -66,7 +66,7 @@ export default {
   computed: {},
   methods: {
     viewProduct(product) {
-      this.$router.push(`/product/${product.id}`);
+      this.$router.push(`/products/${product.id}`);
       console.log("View product", product);
     },
     addToCart(product) {
