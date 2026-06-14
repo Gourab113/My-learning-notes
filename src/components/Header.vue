@@ -1,9 +1,11 @@
 <template>
   <v-app-bar :elevation="4">
     <template v-slot:prepend>
-      <v-app-bar-nav-icon></v-app-bar-nav-icon>
+      <v-btn @click="clickedHome">
+        <svg-icon type="mdi" :path="path"></svg-icon>
+        <v-app-bar-title>{{ title }}</v-app-bar-title>
+      </v-btn>
 
-      <v-app-bar-title>{{ title }}</v-app-bar-title>
       <v-btn
         color="indigo"
         class="mr-5 ml-15"
@@ -25,15 +27,20 @@
 <script>
 import api from "../api";
 import LoginModal from "./LoginModal.vue";
+import SvgIcon from "@jamescoyle/vue-icon";
+import { mdiHomeCircle } from "@mdi/js";
 
 export default {
+  name: "my-component",
   components: {
     "login-modal": LoginModal,
+    SvgIcon,
   },
   data() {
     return {
       title: "Teddy Shop",
       divisions: [],
+      path: mdiHomeCircle,
     };
   },
   methods: {
@@ -49,6 +56,9 @@ export default {
         console.error(error);
       }
       console.log("Get login data");
+    },
+    clickedHome() {
+      this.$router.push("/");
     },
   },
 };

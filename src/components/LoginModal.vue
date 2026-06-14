@@ -113,6 +113,7 @@
 
 <script>
 import api from "../api";
+import Swal from "sweetalert2";
 export default {
   props: {
     divisions: {
@@ -170,6 +171,11 @@ export default {
         };
         try {
           const response = await api.post("/add-user", payload);
+
+          Swal.fire({
+            title: "Signup Successful",
+            icon: "success",
+          });
           console.log("Signup Success", response.data);
         } catch (error) {
           console.error(error);
