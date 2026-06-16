@@ -1,108 +1,137 @@
 <template>
-  <div class="max-w-5xl mx-auto p-6">
-    <h1 class="text-5xl text-center font-bold mb-8">Learn Vocabulary</h1>
+  <div class="w-full px-12 py-6 bg-gray-50 min-h-screen">
+    <h1 class="text-4xl font-extrabold text-center mb-10 text-gray-800">
+      Competitive Programming
+    </h1>
 
-    <!-- Letter Selection -->
-    <div class="flex flex-wrap justify-center gap-2 mb-8">
-      <button
-        v-for="letter in letters"
-        :key="letter"
-        @click="loadWords(letter)"
-        class="px-4 py-2 border rounded hover:bg-gray-200"
+    <div
+      v-for="(cat, i) in cpData"
+      :key="i"
+      class="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
+    >
+      <!-- CATEGORY HEADER -->
+      <div
+        class="flex justify-between items-center px-6 py-4 bg-blue-50 cursor-pointer hover:bg-blue-100 transition"
+        @click="toggleCategory(i)"
       >
-        {{ letter }}
-      </button>
+        <h2 class="text-xl font-bold text-gray-800">
+          {{ cat.category }}
+        </h2>
+
+        <span class="text-gray-600 text-lg font-bold">
+          {{ openCategories.includes(i) ? "▲" : "▼" }}
+        </span>
+      </div>
+
+      <!-- CONTENT -->
+      <div v-show="openCategories.includes(i)" class="divide-y divide-gray-100">
+        <div
+          v-for="(problem, j) in cat.problems"
+          :key="j"
+          class="px-6 py-4 flex justify-between items-start hover:bg-gray-50 transition"
+        >
+          <!-- LEFT SIDE -->
+          <div class="flex-1 pr-6">
+            <!-- TITLE -->
+            <a
+              :href="problem.link"
+              target="_blank"
+              class="text-lg font-semibold text-blue-700 hover:underline"
+            >
+              {{ problem.title }}
+            </a>
+
+            <!-- SOURCE -->
+            <p class="text-sm text-gray-600 mt-1">
+              <span class="font-medium text-gray-700">Source:</span>
+              {{ problem.source }}
+            </p>
+
+            <!-- TOPICS -->
+            <div class="mt-2 text-sm leading-relaxed">
+              <span v-for="(topic, k) in problem.topics" :key="k" class="mr-3">
+                <span class="font-semibold text-gray-800">
+                  {{ topic.name }}:
+                </span>
+
+                <a
+                  v-for="(link, l) in topic.learnLinks"
+                  :key="l"
+                  :href="link"
+                  target="_blank"
+                  class="text-sky-600 font-medium hover:underline ml-1"
+                >
+                  learn{{ l + 1 }}
+                </a>
+
+                <span
+                  v-if="k !== problem.topics.length - 1"
+                  class="text-gray-300"
+                >
+                  |
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <!-- RIGHT SIDE -->
+          <div class="flex flex-col items-end gap-2 whitespace-nowrap">
+            <!-- RATING -->
+            <div class="text-xl font-extrabold text-gray-800">
+              {{ problem.rating }}
+            </div>
+
+            <!-- DIFFICULTY -->
+            <span
+              class="text-sm px-3 py-1 rounded-full font-semibold"
+              :class="getDifficultyClass(problem.rating)"
+            >
+              {{ getDifficultyLabel(problem.rating) }}
+            </span>
+
+            <!-- IMPORTANCE -->
+            <span
+              class="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-full font-medium"
+            >
+              Importance: {{ problem.importance }}/10
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
-
-    <v-expansion-panels class="my-4" variant="accordion">
-      <v-expansion-panel
-        v-for="word in filteredWords"
-        :key="word.word"
-        class="mb-2 rounded-lg bg-grey-lighten-5"
-      >
-        <!-- TITLE -->
-        <v-expansion-panel-title class="bg-grey-lighten-4">
-          <div class="text-h6 font-weight-medium text-grey-darken-3">
-            {{ word.word }}
-          </div>
-        </v-expansion-panel-title>
-
-        <!-- CONTENT -->
-        <v-expansion-panel-text class="pa-3">
-          <!-- Meaning -->
-          <div class="mb-3">
-            <strong class="text-grey-darken-2">Meaning:</strong>
-            <span class="text-grey-darken-3">
-              {{ word.meaning }}
-            </span>
-          </div>
-
-          <!-- Synonyms -->
-          <div class="mb-3">
-            <strong class="text-grey-darken-2">Synonyms:</strong>
-            <span class="text-grey-darken-3">
-              {{ word.synonyms.join(", ") }}
-            </span>
-          </div>
-
-          <!-- Antonyms -->
-          <div class="mb-3">
-            <strong class="text-grey-darken-2">Antonyms:</strong>
-            <span class="text-grey-darken-3">
-              {{ word.antonyms.join(", ") }}
-            </span>
-          </div>
-
-          <!-- Sentences -->
-          <div class="bg-grey-lighten-4 pa-2 rounded">
-            <strong class="text-grey-darken-2">Sentences:</strong>
-
-            <ul class="mt-2 pl-4 text-grey-darken-3">
-              <li v-for="(s, i) in word.sentences" :key="i">
-                {{ s }}
-              </li>
-            </ul>
-          </div>
-        </v-expansion-panel-text>
-      </v-expansion-panel>
-    </v-expansion-panels>
   </div>
 </template>
 
 <script>
+import cpData from "../data/CpData";
+
 export default {
   data() {
     return {
-      words: [],
-      search: "",
-      letters: "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split(""),
+      cpData,
+      openCategories: [],
     };
   },
 
-  async mounted() {
-    await this.loadWords("A");
-  },
-
-  computed: {
-    filteredWords() {
-      return this.words.filter((item) =>
-        item.word.toLowerCase().includes(this.search.toLowerCase()),
-      );
-    },
-  },
-
   methods: {
-    async loadWords(letter) {
-      try {
-        const data = await import(`../data/${letter.toLowerCase()}.json`);
-
-        this.words = data.default;
-
-        console.log("words", this.words);
-      } catch (error) {
-        console.error(error);
-        this.words = [];
+    toggleCategory(i) {
+      if (this.openCategories.includes(i)) {
+        this.openCategories = this.openCategories.filter((x) => x !== i);
+      } else {
+        this.openCategories.push(i);
       }
+    },
+
+    getDifficultyLabel(rating) {
+      if (rating <= 1200) return "Easy";
+      if (rating <= 1800) return "Medium";
+      return "Hard";
+    },
+
+    getDifficultyClass(rating) {
+      if (rating <= 1200) return "bg-green-100 text-green-700";
+      if (rating <= 1800) return "bg-yellow-100 text-yellow-800";
+      return "bg-red-100 text-red-700";
     },
   },
 };
