@@ -1,100 +1,70 @@
 <template>
-  <div class="w-full px-12 py-6 bg-gray-50 min-h-screen">
-    <h1 class="text-4xl font-extrabold text-center mb-10 text-gray-800">
-      Competitive Programming
-    </h1>
+  <div class="min-h-screen bg-slate-50 py-10">
+    <div class="max-w-6xl mx-auto px-6">
+      <h1 class="text-5xl font-black text-center text-slate-800 mb-12">
+        Learning Track
+      </h1>
 
-    <div
-      v-for="(cat, i) in cpData"
-      :key="i"
-      class="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden"
-    >
-      <!-- CATEGORY HEADER -->
+      <!-- CATEGORY -->
       <div
-        class="flex justify-between items-center px-6 py-4 bg-blue-50 cursor-pointer hover:bg-blue-100 transition"
-        @click="toggleCategory(i)"
+        v-for="(category, categoryIndex) in notesData"
+        :key="categoryIndex"
+        class="mb-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
       >
-        <h2 class="text-xl font-bold text-gray-800">
-          {{ cat.category }}
-        </h2>
-
-        <span class="text-gray-600 text-lg font-bold">
-          {{ openCategories.includes(i) ? "▲" : "▼" }}
-        </span>
-      </div>
-
-      <!-- CONTENT -->
-      <div v-show="openCategories.includes(i)" class="divide-y divide-gray-100">
         <div
-          v-for="(problem, j) in cat.problems"
-          :key="j"
-          class="px-6 py-4 flex justify-between items-start hover:bg-gray-50 transition"
+          class="flex justify-between items-center px-6 py-5 bg-slate-100 cursor-pointer hover:bg-slate-200 transition"
+          @click="toggleCategory(categoryIndex)"
         >
-          <!-- LEFT SIDE -->
-          <div class="flex-1 pr-6">
-            <!-- TITLE -->
-            <a
-              :href="problem.link"
-              target="_blank"
-              class="text-lg font-semibold text-blue-700 hover:underline"
+          <h2 class="text-2xl font-bold text-slate-800">
+            {{ category.category }}
+          </h2>
+
+          <span class="text-xl font-bold">
+            {{ openCategories.includes(categoryIndex) ? "▼" : "▶" }}
+          </span>
+        </div>
+
+        <!-- NOTES -->
+        <div
+          v-show="openCategories.includes(categoryIndex)"
+          class="p-6 space-y-4"
+        >
+          <div
+            v-for="(note, noteIndex) in category.notes"
+            :key="noteIndex"
+            class="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition"
+          >
+            <!-- NOTE HEADER -->
+            <div
+              class="flex justify-between items-center px-5 py-4 cursor-pointer hover:bg-slate-50"
+              @click="toggleNote(categoryIndex, noteIndex)"
             >
-              {{ problem.title }}
-            </a>
+              <h3 class="font-bold text-lg text-slate-800">
+                {{ note.title }}
+              </h3>
 
-            <!-- SOURCE -->
-            <p class="text-sm text-gray-600 mt-1">
-              <span class="font-medium text-gray-700">Source:</span>
-              {{ problem.source }}
-            </p>
-
-            <!-- TOPICS -->
-            <div class="mt-2 text-sm leading-relaxed">
-              <span v-for="(topic, k) in problem.topics" :key="k" class="mr-3">
-                <span class="font-semibold text-gray-800">
-                  {{ topic.name }}:
-                </span>
-
-                <a
-                  v-for="(link, l) in topic.learnLinks"
-                  :key="l"
-                  :href="link"
-                  target="_blank"
-                  class="text-sky-600 font-medium hover:underline ml-1"
-                >
-                  learn{{ l + 1 }}
-                </a>
-
-                <span
-                  v-if="k !== problem.topics.length - 1"
-                  class="text-gray-300"
-                >
-                  |
-                </span>
+              <span class="font-bold text-lg">
+                {{ isNoteOpen(categoryIndex, noteIndex) ? "−" : "+" }}
               </span>
             </div>
-          </div>
 
-          <!-- RIGHT SIDE -->
-          <div class="flex flex-col items-end gap-2 whitespace-nowrap">
-            <!-- RATING -->
-            <div class="text-xl font-extrabold text-gray-800">
-              {{ problem.rating }}
+            <!-- LINKS -->
+            <div
+              v-show="isNoteOpen(categoryIndex, noteIndex)"
+              class="border-t border-slate-100 p-5"
+            >
+              <div class="flex flex-wrap gap-3">
+                <a
+                  v-for="(link, linkIndex) in note.links"
+                  :key="linkIndex"
+                  :href="link.url"
+                  target="_blank"
+                  class="px-4 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm font-medium hover:bg-blue-100 hover:scale-105 transition"
+                >
+                  🔗 {{ link.name }}
+                </a>
+              </div>
             </div>
-
-            <!-- DIFFICULTY -->
-            <span
-              class="text-sm px-3 py-1 rounded-full font-semibold"
-              :class="getDifficultyClass(problem.rating)"
-            >
-              {{ getDifficultyLabel(problem.rating) }}
-            </span>
-
-            <!-- IMPORTANCE -->
-            <span
-              class="text-sm px-3 py-1 bg-gray-100 text-gray-700 rounded-full font-medium"
-            >
-              Importance: {{ problem.importance }}/10
-            </span>
           </div>
         </div>
       </div>
@@ -103,35 +73,42 @@
 </template>
 
 <script>
-import cpData from "../data/CpData";
+import notesData from "../data/notesData";
 
 export default {
   data() {
     return {
-      cpData,
+      notesData,
       openCategories: [],
+      openNotes: {},
     };
   },
 
+  mounted() {
+    // সব category open থাকবে শুরুতে
+    this.openCategories = this.notesData.map((_, i) => i);
+  },
+
   methods: {
-    toggleCategory(i) {
-      if (this.openCategories.includes(i)) {
-        this.openCategories = this.openCategories.filter((x) => x !== i);
+    toggleCategory(index) {
+      if (this.openCategories.includes(index)) {
+        this.openCategories = this.openCategories.filter((x) => x !== index);
       } else {
-        this.openCategories.push(i);
+        this.openCategories.push(index);
       }
     },
 
-    getDifficultyLabel(rating) {
-      if (rating <= 1200) return "Easy";
-      if (rating <= 1800) return "Medium";
-      return "Hard";
+    toggleNote(categoryIndex, noteIndex) {
+      const key = `${categoryIndex}-${noteIndex}`;
+
+      this.openNotes = {
+        ...this.openNotes,
+        [key]: !this.openNotes[key],
+      };
     },
 
-    getDifficultyClass(rating) {
-      if (rating <= 1200) return "bg-green-100 text-green-700";
-      if (rating <= 1800) return "bg-yellow-100 text-yellow-800";
-      return "bg-red-100 text-red-700";
+    isNoteOpen(categoryIndex, noteIndex) {
+      return this.openNotes[`${categoryIndex}-${noteIndex}`];
     },
   },
 };
